@@ -9,7 +9,8 @@ import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
 import Toggle from '@/components/admin/ui/Toggle'
 import Badge from '@/components/admin/ui/Badge'
-import { getScoops, createScoop, updateScoop, deleteScoop } from '@/repositories/scoops.repository'
+import { getScoops } from '@/repositories/scoops.repository'
+import { createScoopAction, updateScoopAction, deleteScoopAction } from '@/app/admin/actions'
 import type { Scoop } from '@/types/admin-cms.types'
 
 const EMPTY_SCOOP: Omit<Scoop, 'id' | 'created_at' | 'updated_at'> = {
@@ -50,8 +51,8 @@ export default function ScoopsItemsPage() {
     }
     setSaving(true)
     try {
-      const item = await createScoop({ ...newItem, sort_order: items.length })
-      setItems((prev) => [...prev, item])
+      const item = await createScoopAction({ ...newItem, sort_order: items.length })
+      setItems((prev) => [...prev, item as unknown as Scoop])
       setNewItem({ ...EMPTY_SCOOP })
       setAddingNew(false)
       toast.success('Scoop added.')
@@ -65,8 +66,8 @@ export default function ScoopsItemsPage() {
   async function handleUpdate(id: string) {
     setSaving(true)
     try {
-      const updated = await updateScoop(id, editItem)
-      setItems((prev) => prev.map((s) => (s.id === id ? updated : s)))
+      const updated = await updateScoopAction(id, editItem)
+      setItems((prev) => prev.map((s) => (s.id === id ? updated as unknown as Scoop : s)))
       setEditingId(null)
       setEditItem({})
       toast.success('Scoop updated.')
@@ -79,8 +80,8 @@ export default function ScoopsItemsPage() {
 
   async function handleToggle(item: Scoop) {
     try {
-      const updated = await updateScoop(item.id, { published: !item.published })
-      setItems((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      const updated = await updateScoopAction(item.id, { published: !item.published })
+      setItems((prev) => prev.map((s) => (s.id === updated.id ? updated as unknown as Scoop : s)))
     } catch {
       toast.error('Failed to update.')
     }
@@ -89,7 +90,7 @@ export default function ScoopsItemsPage() {
   async function handleDelete(id: string) {
     if (!confirm('Delete this scoop?')) return
     try {
-      await deleteScoop(id)
+      await deleteScoopAction(id)
       setItems((prev) => prev.filter((s) => s.id !== id))
       toast.success('Scoop deleted.')
     } catch {

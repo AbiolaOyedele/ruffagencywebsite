@@ -8,7 +8,8 @@ import PageColorsSection from '@/components/admin/features/PageColorsSection'
 import Card, { CardHeader, CardTitle, CardDescription } from '@/components/admin/ui/Card'
 import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
-import { getSetting, upsertSetting } from '@/repositories/settings.repository'
+import { getSetting } from '@/repositories/settings.repository'
+import { saveSettingAction } from '@/app/admin/actions'
 import type { ScoopsPageSettings, PageColors } from '@/types/admin-cms.types'
 
 const defaults: ScoopsPageSettings = {
@@ -50,7 +51,7 @@ export default function ScoopsPageEditor() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      await upsertSetting('page.scoops', settings)
+      await saveSettingAction('page.scoops', settings)
       setOriginal(settings)
       toast.success('Scoops page settings saved.')
     } catch {

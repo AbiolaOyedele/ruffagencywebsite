@@ -9,7 +9,8 @@ import Button from '@/components/admin/ui/Button'
 import Input from '@/components/admin/ui/Input'
 import Toggle from '@/components/admin/ui/Toggle'
 import ImageUpload from '@/components/admin/ui/ImageUpload'
-import { getLogos, createLogo, updateLogo, deleteLogo } from '@/repositories/logos.repository'
+import { getLogos } from '@/repositories/logos.repository'
+import { createLogoAction, updateLogoAction, deleteLogoAction } from '@/app/admin/actions'
 import type { ClientLogo } from '@/types/admin-cms.types'
 
 export default function LogosPage() {
@@ -39,13 +40,13 @@ export default function LogosPage() {
     }
     setSaving(true)
     try {
-      const logo = await createLogo({
+      const logo = await createLogoAction({
         title: newTitle,
         image_url: newUrl,
         sort_order: logos.length,
         published: true,
       })
-      setLogos((prev) => [...prev, logo])
+      setLogos((prev) => [...prev, logo as unknown as ClientLogo])
       setNewTitle('')
       setNewUrl('')
       setAddingNew(false)
@@ -59,8 +60,8 @@ export default function LogosPage() {
 
   async function handleToggle(logo: ClientLogo) {
     try {
-      const updated = await updateLogo(logo.id, { published: !logo.published })
-      setLogos((prev) => prev.map((l) => (l.id === updated.id ? updated : l)))
+      const updated = await updateLogoAction(logo.id, { published: !logo.published })
+      setLogos((prev) => prev.map((l) => (l.id === updated.id ? updated as unknown as ClientLogo : l)))
     } catch {
       toast.error('Failed to update.')
     }
@@ -69,7 +70,7 @@ export default function LogosPage() {
   async function handleDelete(id: string) {
     if (!confirm('Remove this logo from the marquee?')) return
     try {
-      await deleteLogo(id)
+      await deleteLogoAction(id)
       setLogos((prev) => prev.filter((l) => l.id !== id))
       toast.success('Logo removed.')
     } catch {

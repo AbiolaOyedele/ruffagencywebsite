@@ -8,7 +8,8 @@ import PageColorsSection from '@/components/admin/features/PageColorsSection'
 import Card, { CardHeader, CardTitle, CardDescription } from '@/components/admin/ui/Card'
 import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
-import { getSetting, upsertSetting } from '@/repositories/settings.repository'
+import { getSetting } from '@/repositories/settings.repository'
+import { saveSettingAction } from '@/app/admin/actions'
 import type { WorkPageSettings, PageColors } from '@/types/admin-cms.types'
 
 const defaults: WorkPageSettings = {
@@ -47,7 +48,7 @@ export default function WorkPageEditor() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      await upsertSetting('page.work', settings)
+      await saveSettingAction('page.work', settings)
       setOriginal(settings)
       toast.success('Work page settings saved.')
     } catch {

@@ -7,7 +7,8 @@ import SaveBar from '@/components/admin/features/SaveBar'
 import Card, { CardHeader, CardTitle, CardDescription } from '@/components/admin/ui/Card'
 import Input from '@/components/admin/ui/Input'
 import Toggle from '@/components/admin/ui/Toggle'
-import { getSetting, upsertSetting } from '@/repositories/settings.repository'
+import { getSetting } from '@/repositories/settings.repository'
+import { saveSettingAction } from '@/app/admin/actions'
 import type {
   SiteSettings,
   SocialLinks,
@@ -93,10 +94,10 @@ export default function GlobalSettingsPage() {
     setSaving(true)
     try {
       await Promise.all([
-        upsertSetting('global.site', site),
-        upsertSetting('global.social', social),
-        upsertSetting('global.footer', footer),
-        upsertSetting('global.navigation', nav),
+        saveSettingAction('global.site', site),
+        saveSettingAction('global.social', social),
+        saveSettingAction('global.footer', footer),
+        saveSettingAction('global.navigation', nav),
       ])
       setOriginal({ site, social, footer, nav })
       toast.success('Global settings saved.')

@@ -9,7 +9,8 @@ import Card, { CardHeader, CardTitle, CardDescription } from '@/components/admin
 import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
 import ImageUpload from '@/components/admin/ui/ImageUpload'
-import { getSetting, upsertSetting } from '@/repositories/settings.repository'
+import { getSetting } from '@/repositories/settings.repository'
+import { saveSettingAction } from '@/app/admin/actions'
 import type { HomePageSettings, PageColors } from '@/types/admin-cms.types'
 
 const defaults: HomePageSettings = {
@@ -54,7 +55,7 @@ export default function HomePageEditor() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      await upsertSetting('page.home', settings)
+      await saveSettingAction('page.home', settings)
       setOriginal(settings)
       toast.success('Home page settings saved.')
     } catch {

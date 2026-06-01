@@ -10,7 +10,8 @@ import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
 import ImageUpload from '@/components/admin/ui/ImageUpload'
 import Button from '@/components/admin/ui/Button'
-import { getSetting, upsertSetting } from '@/repositories/settings.repository'
+import { getSetting } from '@/repositories/settings.repository'
+import { saveSettingAction } from '@/app/admin/actions'
 import type { AboutPageSettings, PageColors } from '@/types/admin-cms.types'
 
 const defaults: AboutPageSettings = {
@@ -76,7 +77,7 @@ export default function AboutPageEditor() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      await upsertSetting('page.about', settings)
+      await saveSettingAction('page.about', settings)
       setOriginal(settings)
       toast.success('About page settings saved.')
     } catch {

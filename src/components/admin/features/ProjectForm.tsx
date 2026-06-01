@@ -9,7 +9,7 @@ import Textarea from '@/components/admin/ui/Textarea'
 import Button from '@/components/admin/ui/Button'
 import Toggle from '@/components/admin/ui/Toggle'
 import ImageUpload from '@/components/admin/ui/ImageUpload'
-import { createProject, updateProject } from '@/repositories/projects.repository'
+import { upsertProjectAction } from '@/app/admin/actions'
 import type { Project } from '@/types/admin-cms.types'
 
 const CATEGORIES = [
@@ -86,13 +86,13 @@ export default function ProjectForm({ initial }: ProjectFormProps) {
 
       try {
         if (isEditing && initial) {
-          await updateProject(initial.id, { ...form, slug })
+          await upsertProjectAction({ id: initial.id, ...form, slug })
           toast.success('Project updated.')
         } else {
-          await createProject({ ...form, slug })
+          await upsertProjectAction({ ...form, slug })
           toast.success('Project created.')
         }
-        router.push('/projects')
+        router.push('/admin/projects')
         router.refresh()
       } catch {
         toast.error('Failed to save project.')

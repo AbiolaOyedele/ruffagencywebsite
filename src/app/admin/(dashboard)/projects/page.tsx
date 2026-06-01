@@ -9,7 +9,8 @@ import Button from '@/components/admin/ui/Button'
 import Badge from '@/components/admin/ui/Badge'
 import Card from '@/components/admin/ui/Card'
 import Toggle from '@/components/admin/ui/Toggle'
-import { getProjects, deleteProject, updateProject } from '@/repositories/projects.repository'
+import { getProjects } from '@/repositories/projects.repository'
+import { updateProjectAction, deleteProjectAction } from '@/app/admin/actions'
 import type { Project } from '@/types/admin-cms.types'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -44,8 +45,8 @@ export default function ProjectsPage() {
 
   async function handleTogglePublished(project: Project) {
     try {
-      const updated = await updateProject(project.id, { published: !project.published })
-      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+      const updated = await updateProjectAction(project.id, { published: !project.published })
+      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated as unknown as Project : p)))
       toast.success(updated.published ? 'Project published.' : 'Project unpublished.')
     } catch {
       toast.error('Failed to update project.')
@@ -56,7 +57,7 @@ export default function ProjectsPage() {
     if (!confirm('Delete this project? This cannot be undone.')) return
     setDeletingId(id)
     try {
-      await deleteProject(id)
+      await deleteProjectAction(id)
       setProjects((prev) => prev.filter((p) => p.id !== id))
       toast.success('Project deleted.')
     } catch {

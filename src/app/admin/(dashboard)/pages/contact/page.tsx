@@ -8,7 +8,8 @@ import PageColorsSection from '@/components/admin/features/PageColorsSection'
 import Card, { CardHeader, CardTitle, CardDescription } from '@/components/admin/ui/Card'
 import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
-import { getSetting, upsertSetting } from '@/repositories/settings.repository'
+import { getSetting } from '@/repositories/settings.repository'
+import { saveSettingAction } from '@/app/admin/actions'
 import type { ContactPageSettings, PageColors } from '@/types/admin-cms.types'
 
 const defaults: ContactPageSettings = {
@@ -57,7 +58,7 @@ export default function ContactPageEditor() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      await upsertSetting('page.contact', settings)
+      await saveSettingAction('page.contact', settings)
       setOriginal(settings)
       toast.success('Contact page settings saved.')
     } catch {

@@ -8,7 +8,8 @@ import Button from '@/components/admin/ui/Button'
 import Input from '@/components/admin/ui/Input'
 import Textarea from '@/components/admin/ui/Textarea'
 import Toggle from '@/components/admin/ui/Toggle'
-import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from '@/repositories/testimonials.repository'
+import { getTestimonials } from '@/repositories/testimonials.repository'
+import { createTestimonialAction, updateTestimonialAction, deleteTestimonialAction } from '@/app/admin/actions'
 import type { Testimonial } from '@/types/admin-cms.types'
 
 export default function TestimonialsPage() {
@@ -41,13 +42,13 @@ export default function TestimonialsPage() {
     }
     setSaving(true)
     try {
-      const item = await createTestimonial({
+      const item = await createTestimonialAction({
         quote: newQuote,
         credit: newCredit,
         sort_order: items.length,
         published: true,
       })
-      setItems((prev) => [...prev, item])
+      setItems((prev) => [...prev, item as unknown as Testimonial])
       setNewQuote('')
       setNewCredit('')
       setAddingNew(false)
@@ -62,8 +63,8 @@ export default function TestimonialsPage() {
   async function handleUpdate(id: string) {
     setSaving(true)
     try {
-      const updated = await updateTestimonial(id, { quote: editQuote, credit: editCredit })
-      setItems((prev) => prev.map((t) => (t.id === id ? updated : t)))
+      const updated = await updateTestimonialAction(id, { quote: editQuote, credit: editCredit })
+      setItems((prev) => prev.map((t) => (t.id === id ? updated as unknown as Testimonial : t)))
       setEditingId(null)
       toast.success('Testimonial updated.')
     } catch {
@@ -75,8 +76,8 @@ export default function TestimonialsPage() {
 
   async function handleToggle(item: Testimonial) {
     try {
-      const updated = await updateTestimonial(item.id, { published: !item.published })
-      setItems((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      const updated = await updateTestimonialAction(item.id, { published: !item.published })
+      setItems((prev) => prev.map((t) => (t.id === updated.id ? updated as unknown as Testimonial : t)))
     } catch {
       toast.error('Failed to update.')
     }
@@ -85,7 +86,7 @@ export default function TestimonialsPage() {
   async function handleDelete(id: string) {
     if (!confirm('Delete this testimonial?')) return
     try {
-      await deleteTestimonial(id)
+      await deleteTestimonialAction(id)
       setItems((prev) => prev.filter((t) => t.id !== id))
       toast.success('Testimonial deleted.')
     } catch {
