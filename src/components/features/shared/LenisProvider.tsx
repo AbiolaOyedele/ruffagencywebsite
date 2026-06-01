@@ -8,8 +8,8 @@ interface LenisProviderProps {
 }
 
 /**
- * Wraps the application in Lenis smooth scroll.
- * Must be a Client Component since it touches the DOM.
+ * Wraps the public site in Lenis smooth scroll.
+ * Only rendered inside (site)/layout.tsx — admin routes never load this.
  */
 export function LenisProvider({ children }: LenisProviderProps) {
   useEffect(() => {
