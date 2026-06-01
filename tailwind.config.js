@@ -10,7 +10,7 @@ const fontSize   = fluid.fontSize   ?? fluidPlugin.fontSize   ?? {}
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: {
-    files: ['./src/**/*.{ts,tsx,js,jsx}'],
+    files: ['./src/**/*.{ts,tsx,js,jsx}', './src/components/admin/**/*.{ts,tsx}'],
     extract: {
       DEFAULT: extract,
     },

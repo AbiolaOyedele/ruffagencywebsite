@@ -1,0 +1,35 @@
+/*
+ * Admin panel styles — scoped to /admin/* routes.
+ * Uses standard Tailwind v3 utilities (already compiled by the shared config).
+ * Intentionally uses system fonts so the admin feels distinct from the public site.
+ */
+
+:root {
+  --admin-bg:      #f9fafb;
+  --admin-fg:      #1e1e23;
+  --admin-border:  #e5e7eb;
+  --admin-muted:   #6b7280;
+  --admin-accent:  #1e1e23;
+}
+
+/* Reset any public site font to system stack for admin */
+.admin-root,
+.admin-root * {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--admin-bg);
+  color: var(--admin-fg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin scrollbar for admin sidebar */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
+}

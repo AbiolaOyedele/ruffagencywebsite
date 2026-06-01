@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { LottieBurger } from '@/components/features/shared/LottieBurger'
 
 /**
@@ -10,7 +11,7 @@ export function Nav() {
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none text-accent-fg">
       {/* Logo */}
       <div className="absolute ~left-2/[5.625rem] ~top-4/[2.125rem] pointer-events-auto">
-        <a href="/" aria-label="The Ruff Agency — home">
+        <Link href="/" aria-label="The Ruff Agency — home">
           <Image
             src="/images/ruff-logo.svg"
             alt="The Ruff Agency"
@@ -19,7 +20,7 @@ export function Nav() {
             className="h-10 lg:h-14 w-auto object-contain"
             priority
           />
-        </a>
+        </Link>
       </div>
 
       {/* Burger — Client Component */}

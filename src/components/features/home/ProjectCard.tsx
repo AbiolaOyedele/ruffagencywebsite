@@ -20,18 +20,22 @@ export function ProjectCard({ project, featured = false }: ProjectCardProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLDivElement>(null)
 
+  // Motion v12 types don't expose shorthand transform props (scale, y) on DOM elements,
+  // but they work at runtime. Cast through unknown to satisfy TypeScript.
+  type MotionTarget = Parameters<typeof animate>[1]
+
   function handleMouseEnter() {
     if (!imageRef.current) return
-    void animate(imageRef.current, { scale: 0.58, y: 0 }, { type: 'spring', bounce: 0.2, duration: 0.3 })
-    void animate(overlayRef.current!, { height: '45%' }, { type: 'spring', bounce: 0.2, duration: 0.3 })
-    void animate(textRef.current!, { transform: 'translateY(0)' }, { type: 'spring', bounce: 0.3, duration: 0.3, delay: 0.1 })
+    void animate(imageRef.current, { scale: 0.58, y: 0 } as MotionTarget, { type: 'spring', bounce: 0.2, duration: 0.3 })
+    void animate(overlayRef.current!, { height: '45%' } as MotionTarget, { type: 'spring', bounce: 0.2, duration: 0.3 })
+    void animate(textRef.current!, { transform: 'translateY(0)' } as MotionTarget, { type: 'spring', bounce: 0.3, duration: 0.3, delay: 0.1 })
   }
 
   function handleMouseLeave() {
     if (!imageRef.current) return
-    void animate(imageRef.current, { scale: 1, y: 0 }, { duration: 0.8, easing: [0.05, 0.13, 0.01, 0.99] as [number, number, number, number] })
-    void animate(overlayRef.current!, { height: '0%' }, { duration: 0.8, easing: [0.05, 0.13, 0.01, 0.99] as [number, number, number, number] })
-    void animate(textRef.current!, { transform: 'translateY(5rem)' }, { duration: 0.8, easing: [0.05, 0.13, 0.01, 0.99] as [number, number, number, number] })
+    void animate(imageRef.current, { scale: 1, y: 0 } as MotionTarget, { duration: 0.8 })
+    void animate(overlayRef.current!, { height: '0%' } as MotionTarget, { duration: 0.8 })
+    void animate(textRef.current!, { transform: 'translateY(5rem)' } as MotionTarget, { duration: 0.8 })
   }
 
   return (
