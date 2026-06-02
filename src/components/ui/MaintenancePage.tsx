@@ -59,7 +59,7 @@ export function MaintenancePage() {
   const lines = HEADING.split('\n')
 
   return (
-    <main className="min-h-screen bg-white text-[#feb3d2] flex items-center px-6 md:px-16 lg:px-24 overflow-hidden">
+    <main className="min-h-screen bg-[#e92038] text-white flex items-center px-6 md:px-16 lg:px-24 overflow-hidden">
       <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-0 py-24 md:py-0">
 
         {/* Left — copy */}
@@ -67,7 +67,7 @@ export function MaintenancePage() {
 
           <span
             ref={labelRef}
-            className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-[#feb3d2]/70 mb-8"
+            className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-white/60 mb-8"
             style={{ opacity: 0 }}
           >
             — Under Construction
@@ -75,7 +75,7 @@ export function MaintenancePage() {
 
           <h1
             ref={headingRef}
-            className="leading-[0.92] tracking-tighter mb-8 text-[#feb3d2]"
+            className="leading-[0.92] tracking-tighter mb-8 text-white"
             style={{
               fontFamily: '"TiltWarp", sans-serif',
               fontWeight: 700,
@@ -102,7 +102,7 @@ export function MaintenancePage() {
 
           <p
             ref={subRef}
-            className="text-[#feb3d2]/80 text-lg md:text-xl leading-relaxed max-w-sm"
+            className="text-white/70 text-lg md:text-xl leading-relaxed max-w-sm"
             style={{ fontFamily: '"Grandstander", sans-serif', opacity: 0 }}
           >
             Check back soon — it&apos;ll be worth it.
@@ -122,7 +122,6 @@ export function MaintenancePage() {
               width={600}
               height={600}
               className="w-full h-auto"
-              style={{ filter: 'invert(83%) sepia(21%) saturate(500%) hue-rotate(295deg) brightness(103%)' }}
               priority
             />
           </div>
