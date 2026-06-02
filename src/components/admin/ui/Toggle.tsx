@@ -1,5 +1,7 @@
 'use client'
 
+import { useId } from 'react'
+
 interface ToggleProps {
   checked: boolean
   onChange: (checked: boolean) => void
@@ -8,14 +10,16 @@ interface ToggleProps {
 }
 
 export default function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
-  const id = label?.toLowerCase().replace(/\s+/g, '-') ?? 'toggle'
+  // useId() generates a stable unique ID per component instance — avoids the
+  // id="" problem that occurs when label is an empty string.
+  const uid = useId()
 
   return (
-    <label htmlFor={id} className="flex cursor-pointer items-center gap-3">
+    <label htmlFor={uid} className="flex cursor-pointer items-center gap-3">
       <div className="relative">
         <input
           type="checkbox"
-          id={id}
+          id={uid}
           className="sr-only"
           checked={checked}
           disabled={disabled}

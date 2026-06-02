@@ -1,4 +1,10 @@
 import type { Metadata, Viewport } from 'next'
+
+// Re-fetch global data (nav, maintenance mode) on every request.
+// Without this the layout may be statically cached at build time and never
+// reflect admin changes such as toggling maintenance mode.
+export const dynamic = 'force-dynamic'
+
 import { MenuProvider } from '@/lib/menu-context'
 import { LenisProvider } from '@/components/features/shared/LenisProvider'
 import { PageLoader } from '@/components/features/shared/PageLoader'
