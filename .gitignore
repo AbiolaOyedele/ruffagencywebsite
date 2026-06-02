@@ -21,3 +21,6 @@ Thumbs.db
 .idea/
 .vercel
 .env*
+
+# Supabase CLI temp files (local session state — not for version control)
+supabase/.temp/
