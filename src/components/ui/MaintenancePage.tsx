@@ -122,6 +122,7 @@ export function MaintenancePage() {
               width={600}
               height={600}
               className="w-full h-auto"
+              style={{ filter: 'brightness(0) invert(1)' }}
               priority
             />
           </div>
