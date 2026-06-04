@@ -1,5 +1,21 @@
+/**
+ * cms.ts — Unified data layer
+ *
+ * Content (projects, scoops, testimonials, logos, global nav/settings) → Sanity
+ * Page styling (colors, intro text, hero images) → Supabase settings table
+ *
+ * All functions are wrapped in React cache() for request-level deduplication.
+ */
+
 import { cache } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  fetchSanityProjects,
+  fetchSanityTestimonials,
+  fetchSanityLogos,
+  fetchSanityScoops,
+  fetchSanityGlobalSettings,
+} from '@/sanity/lib/queries'
 import type {
   GlobalData,
   HomePageBundle,
@@ -18,6 +34,24 @@ import type {
   Logo,
   ScoopItem,
 } from '@/types/cms'
+
+// ── Supabase setting reader ───────────────────────────────────
+
+async function fetchSetting(key: string): Promise<Record<string, unknown> | null> {
+  const { data } = await supabase
+    .from('ruff_settings')
+    .select('value')
+    .eq('key', key)
+    .single()
+  return (data?.value as Record<string, unknown>) ?? null
+}
+
+function resolve<T>(result: PromiseSettledResult<T | null>, fallback: T): T {
+  if (result.status === 'fulfilled' && result.value !== null && result.value !== undefined) {
+    return result.value
+  }
+  return fallback
+}
 
 // ── Defaults ──────────────────────────────────────────────────
 
@@ -44,239 +78,11 @@ export const HOME_DEFAULTS: HomePageSettings = {
   hero_image_url: '/images/hero.jpg',
   intro_heading: 'Creative Rebellion',
   intro_subheading: 'in every pixel',
-  intro_body:
-    "We're The Ruff Agency, an animation and design studio based in London, UK. With a love for character, distilled design and pixel-perfect motion, we create expressive work for brands and agencies of all sizes.",
+  intro_body: "We're The Ruff Agency, an animation and design studio based in London, UK. With a love for character, distilled design and pixel-perfect motion, we create expressive work for brands and agencies of all sizes.",
   cta_text: 'Find out more about us',
   cta_href: '/about',
   marquee_bg_color: '213 243 255',
 }
-
-export const PROJECT_DEFAULTS: Project[] = [
-  {
-    id: 'lego',
-    slug: 'lego-build-day',
-    title: 'LEGO Build Day',
-    client: 'LEGO',
-    description: 'A social campaign to get people building together',
-    bg_color: '#ffcd00',
-    image_url: '/images/projects/lego-build-day/Lego.png',
-    href: '/work/lego-build-day',
-    categories: ['featured', 'ads'],
-    is_featured: true,
-    sort_order: 0,
-  },
-  {
-    id: 'apple',
-    slug: 'apple-seollal',
-    title: 'Apple Seollal',
-    client: 'Apple',
-    description: 'Dancing into the Korean New Year!',
-    bg_color: '#c9faa8',
-    image_url: '/images/projects/apple-seollal/Apple.png',
-    href: '/work/apple-seollal',
-    categories: ['featured', 'ads'],
-    is_featured: false,
-    sort_order: 1,
-  },
-  {
-    id: 'dropbox',
-    slug: 'dropbox-presents',
-    title: 'Dropbox Presents',
-    client: 'Dropbox',
-    description: 'Capturing the creative process for Hollywood',
-    bg_color: '#feb3d2',
-    image_url: '/images/projects/dropbox-presents/Dropbox-Presents.png',
-    href: '/work/dropbox-presents',
-    categories: ['ads'],
-    is_featured: false,
-    sort_order: 2,
-  },
-  {
-    id: 'youtube',
-    slug: 'youtube-shopping',
-    title: 'YouTube Shopping',
-    client: 'YouTube',
-    description: 'An illustration system to liven up in-app shopping',
-    bg_color: '#d5f3ff',
-    image_url: '/images/projects/youtube-shopping/Youtube.png',
-    href: '/work/youtube-shopping',
-    categories: ['design'],
-    is_featured: false,
-    sort_order: 3,
-  },
-]
-
-export const TESTIMONIAL_DEFAULTS: Testimonial[] = [
-  {
-    id: '1',
-    quote:
-      '<p>In-house creative departments are looking for studios that possess a unicorn combination of technical expertise, creative stamina, and collaborative spirit. The Ruff Agency embodies these qualities in spades.</p>',
-    credit: '<p>Jonathan Lee, Meta</p>',
-  },
-  {
-    id: '2',
-    quote:
-      '<p>The Ruff Agency are animation wizards, super professional, and can even make Zoom chats a pleasure. After our first commission was complete, we immediately booked in two more.</p>',
-    credit: '<p>Procreate</p>',
-  },
-  {
-    id: '3',
-    quote:
-      '<p>Their team brought an incredible level of creativity and organization to every step of the process, making collaboration seamless and inspiring.</p>',
-    credit: '<p>Kim Nguyen, YouTube</p>',
-  },
-  {
-    id: '4',
-    quote:
-      '<p>Not only is their work super creative and the team super organised, they are a lovely bunch of people who made every interaction delightful!</p>',
-    credit: '<p>Charlotte Riley, CYLNDR</p>',
-  },
-  {
-    id: '5',
-    quote:
-      '<p>Professional &amp; brilliantly creative, they were true problem solvers. Briefing was seamless, their approach clearly communicated.</p>',
-    credit: '<p>Raluca Anastasiu, adam&amp;eveDDB</p>',
-  },
-]
-
-export const LOGO_DEFAULTS: Logo[] = [
-  { id: '1',  title: 'Adam and eve DDB',      image_url: '/images/homepage/Adam-and-eve-DDB-logo.svg' },
-  { id: '2',  title: 'Ogilvy',                image_url: '/images/homepage/Ogilvy-logo.svg' },
-  { id: '3',  title: 'WeTransfer',            image_url: '/images/homepage/WeTransfer-logo.svg' },
-  { id: '4',  title: 'Google',                image_url: '/images/homepage/Google-logo.svg' },
-  { id: '5',  title: 'Meta',                  image_url: '/images/homepage/Meta-logo.svg' },
-  { id: '6',  title: 'Samsung',               image_url: '/images/homepage/Samsung-logo.svg' },
-  { id: '7',  title: 'Airbnb',                image_url: '/images/homepage/Airbnb-logo.svg' },
-  { id: '8',  title: 'Figma',                 image_url: '/images/homepage/Figma-logo.svg' },
-  { id: '9',  title: 'BBC',                   image_url: '/images/homepage/BBC-logo.svg' },
-  { id: '10', title: 'Netflix',               image_url: '/images/homepage/Netflix-logo.svg' },
-  { id: '11', title: 'Procreate',             image_url: '/images/homepage/Procreate-logo.svg' },
-  { id: '12', title: 'Apple',                 image_url: '/images/homepage/AppleLogo-WebsiteV3.svg' },
-  { id: '13', title: 'Dropbox',               image_url: '/images/homepage/Dropbox-logo.svg' },
-  { id: '14', title: 'Collins',               image_url: '/images/homepage/Collins-logo.svg' },
-  { id: '15', title: 'Mailchimp',             image_url: '/images/homepage/Mailchimp-logo.svg' },
-  { id: '16', title: 'Jones Knowles Ritchie', image_url: '/images/homepage/Jones-Knowles-Ritchie-letters-logo.svg' },
-  { id: '17', title: 'Net-a-Porter',          image_url: '/images/homepage/Net-a-Porter-logo.svg' },
-  { id: '18', title: 'Wolff Olins',           image_url: '/images/homepage/Wolff-Olins-Animade.svg' },
-  { id: '19', title: 'Wise',                  image_url: '/images/homepage/Wise-logo.svg' },
-  { id: '20', title: 'AKQA',                  image_url: '/images/homepage/AKQA-logo.svg' },
-  { id: '21', title: 'IBM',                   image_url: '/images/homepage/IBM-logo.svg' },
-  { id: '22', title: 'CoppaFeel',             image_url: '/images/homepage/CoppaFeel-logo.svg' },
-  { id: '23', title: 'Klarna',               image_url: '/images/homepage/Klarna-logo.svg' },
-  { id: '24', title: 'Duolingo',              image_url: '/images/homepage/Duolingo-logo.svg' },
-]
-
-// ── Helpers ───────────────────────────────────────────────────
-
-async function fetchSetting(key: string): Promise<Record<string, unknown> | null> {
-  const { data } = await supabase
-    .from('ruff_settings')
-    .select('value')
-    .eq('key', key)
-    .single()
-  return (data?.value as Record<string, unknown>) ?? null
-}
-
-function resolve<T>(
-  result: PromiseSettledResult<T | null>,
-  fallback: T,
-): T {
-  if (result.status === 'fulfilled' && result.value !== null && result.value !== undefined) {
-    return result.value
-  }
-  return fallback
-}
-
-/**
- * Normalise hrefs from the old Vite/HTML site to Next.js routes.
- * The live Supabase DB still stores paths like /about.html, /work/index.html.
- */
-function normaliseHref(href: string): string {
-  return href
-    .replace(/\/work\/index\.html$/, '/work')
-    .replace(/\/scoops\/index\.html$/, '/scoops')
-    .replace(/\/about\.html$/, '/about')
-    .replace(/\/contact\.html$/, '/contact')
-    .replace(/\/index\.html$/, '/')
-    .replace(/\.html$/, '')
-}
-
-// ── Public API ────────────────────────────────────────────────
-
-/**
- * Fetch global data (nav, footer, social).
- * Wrapped in React cache() so layout + page share one request per render.
- */
-export const fetchGlobalData = cache(async (): Promise<GlobalData> => {
-  const [navResult, siteResult, socialResult, footerResult] = await Promise.allSettled([
-    fetchSetting('global.navigation'),
-    fetchSetting('global.site'),
-    fetchSetting('global.social'),
-    fetchSetting('global.footer'),
-  ])
-
-  const navRaw = resolve(navResult, null) as NavItem[] | null
-
-  // Normalise hrefs so old Vite paths (/about.html) become Next.js routes (/about)
-  const navigation = navRaw
-    ? navRaw.map(item => ({ ...item, href: normaliseHref(item.href) }))
-    : GLOBAL_DEFAULTS.navigation
-
-  return {
-    site:   { ...GLOBAL_DEFAULTS.site,   ...resolve(siteResult,   {}) },
-    social: { ...GLOBAL_DEFAULTS.social, ...resolve(socialResult, {}) },
-    footer: { ...GLOBAL_DEFAULTS.footer, ...resolve(footerResult, {}) },
-    navigation,
-  }
-})
-
-/**
- * Fetch all data needed to render the homepage.
- */
-export const fetchHomePageData = cache(async (): Promise<HomePageBundle> => {
-  const [pageResult, projectsResult, testimonialsResult, logosResult] = await Promise.allSettled([
-    fetchSetting('page.home'),
-    supabase
-      .from('ruff_projects')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => data ?? []),
-    supabase
-      .from('ruff_testimonials')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => data ?? []),
-    supabase
-      .from('ruff_client_logos')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => data ?? []),
-  ])
-
-  const pageData = {
-    ...HOME_DEFAULTS,
-    ...resolve(pageResult, {}),
-  } as HomePageSettings
-
-  const rawProjects = resolve(projectsResult, null) as Project[] | null
-  const testimonials = resolve(testimonialsResult, null) as Testimonial[] | null
-  const logos = resolve(logosResult, null) as Logo[] | null
-
-  // Normalise project hrefs (/work/lego-build-day.html → /work/lego-build-day)
-  const projects = rawProjects?.map(p => ({ ...p, href: normaliseHref(p.href) })) ?? null
-
-  return {
-    page: pageData,
-    projects: projects?.length ? projects : PROJECT_DEFAULTS,
-    testimonials: testimonials?.length ? testimonials : TESTIMONIAL_DEFAULTS,
-    logos: logos?.length ? logos : LOGO_DEFAULTS,
-  }
-})
-
-// ── Work ──────────────────────────────────────────────────────
 
 const WORK_DEFAULTS: WorkPageSettings = {
   accent_fg: '233 32 56',
@@ -285,29 +91,6 @@ const WORK_DEFAULTS: WorkPageSettings = {
   intro_heading: 'Our Work',
   intro_body: "Character-led animation and design for the world's most ambitious brands.",
 }
-
-export const fetchWorkPageData = cache(async (): Promise<WorkPageBundle> => {
-  const [pageResult, projectsResult] = await Promise.allSettled([
-    fetchSetting('page.work'),
-    supabase
-      .from('ruff_projects')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => data ?? []),
-  ])
-
-  const pageData = { ...WORK_DEFAULTS, ...resolve(pageResult, {}) } as WorkPageSettings
-  const rawProjects = resolve(projectsResult, null) as Project[] | null
-  const projects = rawProjects?.map(p => ({ ...p, href: normaliseHref(p.href) })) ?? null
-
-  return {
-    page: pageData,
-    projects: projects?.length ? projects : PROJECT_DEFAULTS,
-  }
-})
-
-// ── About ─────────────────────────────────────────────────────
 
 const ABOUT_DEFAULTS: AboutPageSettings = {
   accent_fg: '45 192 84',
@@ -330,14 +113,6 @@ const ABOUT_DEFAULTS: AboutPageSettings = {
   about_text_2: "Over the years, we've had the joy of helping brands find their voice by creating brand illustration and motion systems, bringing mascots to life, explaining complex concepts through motion and building playful, immersive worlds for animated mini-series and sticker packs.",
 }
 
-export const fetchAboutPageData = cache(async (): Promise<AboutPageBundle> => {
-  const [pageResult] = await Promise.allSettled([fetchSetting('page.about')])
-  const pageData = { ...ABOUT_DEFAULTS, ...resolve(pageResult, {}) } as AboutPageSettings
-  return { page: pageData }
-})
-
-// ── Contact ───────────────────────────────────────────────────
-
 const CONTACT_DEFAULTS: ContactPageSettings = {
   accent_fg: '253 123 51',
   accent_bg: '253 123 51',
@@ -356,15 +131,7 @@ const CONTACT_DEFAULTS: ContactPageSettings = {
   studio_address: 'The Ruff Agency\nLondon, UK',
 }
 
-export const fetchContactPageData = cache(async (): Promise<ContactPageBundle> => {
-  const [pageResult] = await Promise.allSettled([fetchSetting('page.contact')])
-  const pageData = { ...CONTACT_DEFAULTS, ...resolve(pageResult, {}) } as ContactPageSettings
-  return { page: pageData }
-})
-
-// ── Scoops ────────────────────────────────────────────────────
-
-const SCOOPS_DEFAULTS_PAGE: ScoopsPageSettings = {
+const SCOOPS_PAGE_DEFAULTS: ScoopsPageSettings = {
   accent_fg: '124 101 254',
   accent_bg: '124 101 254',
   footer_bg: 'rgb(220,213,255)',
@@ -375,30 +142,94 @@ const SCOOPS_DEFAULTS_PAGE: ScoopsPageSettings = {
   speculative_email: 'hello@theruff.agency',
 }
 
-export const SCOOPS_ITEM_DEFAULTS: ScoopItem[] = [
-  { id: '1', title: 'Senior Character Animator', type: 'job',  category: 'Animation',    description: "We're looking for a senior animator to join our London studio.", href: '#' },
-  { id: '2', title: 'Motion Designer',           type: 'job',  category: 'Design',       description: 'Join our design team to craft beautiful, character-driven motion.', href: '#' },
-  { id: '3', title: 'Producer',                  type: 'job',  category: 'Production',   description: 'An experienced producer to keep our projects running smoothly.', href: '#' },
-  { id: '4', title: 'We won a Vega Award for our LEGO Build Day campaign', type: 'news', category: 'April 2026', description: 'Our LEGO Build Day social campaign has been recognised at the Vega Digital Awards.', href: '#' },
-  { id: '5', title: "The Ruff Agency is featured in It's Nice That", type: 'news', category: 'March 2026', description: "It's Nice That spotlight our work with Apple for Seollal.", href: '#' },
-]
+// ── Public API ────────────────────────────────────────────────
 
-export const fetchScoopsPageData = cache(async (): Promise<ScoopsPageBundle> => {
-  const [pageResult, scoopsResult] = await Promise.allSettled([
-    fetchSetting('page.scoops'),
-    supabase
-      .from('ruff_scoops')
-      .select('*')
-      .eq('published', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data }) => data ?? []),
+/**
+ * Global data — nav, footer, social, maintenance mode.
+ * Reads from Sanity siteSettings first, falls back to Supabase + defaults.
+ */
+export const fetchGlobalData = cache(async (): Promise<GlobalData> => {
+  const [sanityResult, supabaseNavResult, supabaseSiteResult, supabaseSocialResult, supabaseFooterResult] =
+    await Promise.allSettled([
+      fetchSanityGlobalSettings(),
+      fetchSetting('global.navigation'),
+      fetchSetting('global.site'),
+      fetchSetting('global.social'),
+      fetchSetting('global.footer'),
+    ])
+
+  // Sanity takes priority
+  const sanity = sanityResult.status === 'fulfilled' ? sanityResult.value : null
+  if (sanity) {
+    return {
+      site:       { ...GLOBAL_DEFAULTS.site,   ...sanity.site },
+      social:     { ...GLOBAL_DEFAULTS.social, ...sanity.social },
+      footer:     { ...GLOBAL_DEFAULTS.footer, ...sanity.footer },
+      navigation: sanity.navigation?.length ? sanity.navigation as NavItem[] : GLOBAL_DEFAULTS.navigation,
+    }
+  }
+
+  // Fall back to Supabase
+  const navRaw = resolve(supabaseNavResult, null) as NavItem[] | null
+  return {
+    site:       { ...GLOBAL_DEFAULTS.site,   ...resolve(supabaseSiteResult,   {}) },
+    social:     { ...GLOBAL_DEFAULTS.social, ...resolve(supabaseSocialResult, {}) },
+    footer:     { ...GLOBAL_DEFAULTS.footer, ...resolve(supabaseFooterResult, {}) },
+    navigation: navRaw ?? GLOBAL_DEFAULTS.navigation,
+  }
+})
+
+/** Homepage — projects, testimonials, logos from Sanity; page settings from Supabase */
+export const fetchHomePageData = cache(async (): Promise<HomePageBundle> => {
+  const [pageResult, projects, testimonials, logos] = await Promise.allSettled([
+    fetchSetting('page.home'),
+    fetchSanityProjects(),
+    fetchSanityTestimonials(),
+    fetchSanityLogos(),
   ])
 
-  const pageData = { ...SCOOPS_DEFAULTS_PAGE, ...resolve(pageResult, {}) } as ScoopsPageSettings
-  const scoopsItems = resolve(scoopsResult, null) as ScoopItem[] | null
+  return {
+    page: { ...HOME_DEFAULTS, ...resolve(pageResult, {}) } as HomePageSettings,
+    projects: resolve(projects, []) as Project[],
+    testimonials: resolve(testimonials, []) as Testimonial[],
+    logos: resolve(logos, []) as Logo[],
+  }
+})
+
+/** Work page — projects from Sanity; page settings from Supabase */
+export const fetchWorkPageData = cache(async (): Promise<WorkPageBundle> => {
+  const [pageResult, projects] = await Promise.allSettled([
+    fetchSetting('page.work'),
+    fetchSanityProjects(),
+  ])
 
   return {
-    page: pageData,
-    scoopsItems: scoopsItems?.length ? scoopsItems : SCOOPS_ITEM_DEFAULTS,
+    page: { ...WORK_DEFAULTS, ...resolve(pageResult, {}) } as WorkPageSettings,
+    projects: resolve(projects, []) as Project[],
+  }
+})
+
+/** About page — page settings from Supabase */
+export const fetchAboutPageData = cache(async (): Promise<AboutPageBundle> => {
+  const [pageResult] = await Promise.allSettled([fetchSetting('page.about')])
+  return { page: { ...ABOUT_DEFAULTS, ...resolve(pageResult, {}) } as AboutPageSettings }
+})
+
+/** Contact page — page settings from Supabase */
+export const fetchContactPageData = cache(async (): Promise<ContactPageBundle> => {
+  const [pageResult] = await Promise.allSettled([fetchSetting('page.contact')])
+  return { page: { ...CONTACT_DEFAULTS, ...resolve(pageResult, {}) } as ContactPageSettings }
+})
+
+/** Scoops page — items from Sanity; page settings from Supabase */
+export const fetchScoopsPageData = cache(async (): Promise<ScoopsPageBundle> => {
+  const [pageResult, scoops] = await Promise.allSettled([
+    fetchSetting('page.scoops'),
+    fetchSanityScoops(),
+  ])
+
+  return {
+    page: { ...SCOOPS_PAGE_DEFAULTS, ...resolve(pageResult, {}) } as ScoopsPageSettings,
+    scoopsItems: resolve(scoops, []) as ScoopItem[],
   }
 })

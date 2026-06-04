@@ -36,6 +36,9 @@ export interface ScoopItem {
   category: string
   description: string
   href: string
+  slug?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content?: any[]
 }
 
 // ── Settings ──────────────────────────────────────────────────

@@ -40,7 +40,7 @@ export function ProjectCard({ project, featured = false }: ProjectCardProps) {
 
   return (
     <a
-      href={project.href}
+      href={project.slug ? `/work/${project.slug}` : (project.href ?? '#')}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={`~rounded-[.625rem]/[1.25rem] overflow-hidden group block ${

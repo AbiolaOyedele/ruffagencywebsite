@@ -45,7 +45,9 @@ export function ScoopsList({ items }: ScoopsListProps) {
             {visible.map(item => (
               <a
                 key={item.id}
-                href={item.href || '#'}
+                href={item.slug ? `/scoops/${item.slug}` : (item.href || '#')}
+                target={item.slug ? undefined : (item.href && item.href !== '#' ? '_blank' : undefined)}
+                rel={item.slug ? undefined : 'noopener noreferrer'}
                 className="group flex items-start justify-between gap-x-6 ~py-6/10 hover:text-accent-fg transition"
               >
                 <div className="flex flex-col ~gap-y-2/3">

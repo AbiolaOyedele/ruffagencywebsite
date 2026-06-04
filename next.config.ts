@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.amazonaws.com',
       },
+      // Sanity image CDN
+      {
+        protocol: 'https',
+        hostname: 'cdn.sanity.io',
+      },
     ],
   },
 }
