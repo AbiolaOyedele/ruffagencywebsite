@@ -24,6 +24,7 @@ Thumbs.db
 
 # Supabase CLI temp files (local session state — not for version control)
 supabase/.temp/
+supabase/.branches/
 
 # Production env backup — contains live keys, never commit
 .env.production.local
