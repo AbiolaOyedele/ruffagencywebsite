@@ -1,21 +1,13 @@
 /**
- * cms.ts — Unified data layer
+ * cms.ts — Data layer
  *
- * Content (projects, scoops, testimonials, logos, global nav/settings) → Sanity
- * Page styling (colors, intro text, hero images) → Supabase settings table
- *
- * All functions are wrapped in React cache() for request-level deduplication.
+ * Single source of truth: Supabase.
+ * Admin panel writes to Supabase → website reads from Supabase.
+ * All functions wrapped in React cache() for request-level deduplication.
  */
 
 import { cache } from 'react'
 import { supabase } from '@/lib/supabase'
-import {
-  fetchSanityProjects,
-  fetchSanityTestimonials,
-  fetchSanityLogos,
-  fetchSanityScoops,
-  fetchSanityGlobalSettings,
-} from '@/sanity/lib/queries'
 import type {
   GlobalData,
   HomePageBundle,
@@ -35,7 +27,7 @@ import type {
   ScoopItem,
 } from '@/types/cms'
 
-// ── Supabase setting reader ───────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
 
 async function fetchSetting(key: string): Promise<Record<string, unknown> | null> {
   const { data } = await supabase
@@ -51,6 +43,16 @@ function resolve<T>(result: PromiseSettledResult<T | null>, fallback: T): T {
     return result.value
   }
   return fallback
+}
+
+function normaliseHref(href: string): string {
+  return href
+    .replace(/\/work\/index\.html$/, '/work')
+    .replace(/\/scoops\/index\.html$/, '/scoops')
+    .replace(/\/about\.html$/, '/about')
+    .replace(/\/contact\.html$/, '/contact')
+    .replace(/\/index\.html$/, '/')
+    .replace(/\.html$/, '')
 }
 
 // ── Defaults ──────────────────────────────────────────────────
@@ -142,94 +144,141 @@ const SCOOPS_PAGE_DEFAULTS: ScoopsPageSettings = {
   speculative_email: 'hello@theruff.agency',
 }
 
+// ── Supabase content fetchers ─────────────────────────────────
+
+async function fetchProjects(): Promise<Project[]> {
+  const { data } = await supabase
+    .from('ruff_projects')
+    .select('*')
+    .eq('published', true)
+    .order('sort_order', { ascending: true })
+  return (data ?? []).map(p => ({
+    ...p,
+    href: p.href ? normaliseHref(p.href) : `/work/${p.slug}`,
+  })) as Project[]
+}
+
+async function fetchTestimonials(): Promise<Testimonial[]> {
+  const { data } = await supabase
+    .from('ruff_testimonials')
+    .select('*')
+    .eq('published', true)
+    .order('sort_order', { ascending: true })
+  return (data ?? []) as Testimonial[]
+}
+
+async function fetchLogos(): Promise<Logo[]> {
+  const { data } = await supabase
+    .from('ruff_client_logos')
+    .select('*')
+    .eq('published', true)
+    .order('sort_order', { ascending: true })
+  return (data ?? []).map(l => ({ id: l.id, title: l.title, image_url: l.image_url }))
+}
+
+async function fetchScoops(): Promise<ScoopItem[]> {
+  const { data } = await supabase
+    .from('ruff_scoops')
+    .select('*')
+    .eq('published', true)
+    .order('sort_order', { ascending: true })
+  return (data ?? []) as ScoopItem[]
+}
+
 // ── Public API ────────────────────────────────────────────────
 
-/**
- * Global data — nav, footer, social, maintenance mode.
- * Reads from Sanity siteSettings first, falls back to Supabase + defaults.
- */
 export const fetchGlobalData = cache(async (): Promise<GlobalData> => {
-  const [sanityResult, supabaseNavResult, supabaseSiteResult, supabaseSocialResult, supabaseFooterResult] =
-    await Promise.allSettled([
-      fetchSanityGlobalSettings(),
-      fetchSetting('global.navigation'),
-      fetchSetting('global.site'),
-      fetchSetting('global.social'),
-      fetchSetting('global.footer'),
-    ])
+  const [navResult, siteResult, socialResult, footerResult] = await Promise.allSettled([
+    fetchSetting('global.navigation'),
+    fetchSetting('global.site'),
+    fetchSetting('global.social'),
+    fetchSetting('global.footer'),
+  ])
 
-  // Sanity takes priority
-  const sanity = sanityResult.status === 'fulfilled' ? sanityResult.value : null
-  if (sanity) {
-    return {
-      site:       { ...GLOBAL_DEFAULTS.site,   ...sanity.site },
-      social:     { ...GLOBAL_DEFAULTS.social, ...sanity.social },
-      footer:     { ...GLOBAL_DEFAULTS.footer, ...sanity.footer },
-      navigation: sanity.navigation?.length ? sanity.navigation as NavItem[] : GLOBAL_DEFAULTS.navigation,
-    }
-  }
+  const navRaw = resolve(navResult, null) as NavItem[] | null
+  const navigation = navRaw
+    ? navRaw.map(item => ({ ...item, href: normaliseHref(item.href) }))
+    : GLOBAL_DEFAULTS.navigation
 
-  // Fall back to Supabase
-  const navRaw = resolve(supabaseNavResult, null) as NavItem[] | null
   return {
-    site:       { ...GLOBAL_DEFAULTS.site,   ...resolve(supabaseSiteResult,   {}) },
-    social:     { ...GLOBAL_DEFAULTS.social, ...resolve(supabaseSocialResult, {}) },
-    footer:     { ...GLOBAL_DEFAULTS.footer, ...resolve(supabaseFooterResult, {}) },
-    navigation: navRaw ?? GLOBAL_DEFAULTS.navigation,
+    site:       { ...GLOBAL_DEFAULTS.site,   ...resolve(siteResult,   {}) },
+    social:     { ...GLOBAL_DEFAULTS.social, ...resolve(socialResult, {}) },
+    footer:     { ...GLOBAL_DEFAULTS.footer, ...resolve(footerResult, {}) },
+    navigation,
   }
 })
 
-/** Homepage — projects, testimonials, logos from Sanity; page settings from Supabase */
 export const fetchHomePageData = cache(async (): Promise<HomePageBundle> => {
   const [pageResult, projects, testimonials, logos] = await Promise.allSettled([
     fetchSetting('page.home'),
-    fetchSanityProjects(),
-    fetchSanityTestimonials(),
-    fetchSanityLogos(),
+    fetchProjects(),
+    fetchTestimonials(),
+    fetchLogos(),
   ])
 
   return {
-    page: { ...HOME_DEFAULTS, ...resolve(pageResult, {}) } as HomePageSettings,
-    projects: resolve(projects, []) as Project[],
-    testimonials: resolve(testimonials, []) as Testimonial[],
-    logos: resolve(logos, []) as Logo[],
+    page:         { ...HOME_DEFAULTS, ...resolve(pageResult, {}) } as HomePageSettings,
+    projects:     resolve(projects, []),
+    testimonials: resolve(testimonials, []),
+    logos:        resolve(logos, []),
   }
 })
 
-/** Work page — projects from Sanity; page settings from Supabase */
 export const fetchWorkPageData = cache(async (): Promise<WorkPageBundle> => {
   const [pageResult, projects] = await Promise.allSettled([
     fetchSetting('page.work'),
-    fetchSanityProjects(),
+    fetchProjects(),
   ])
 
   return {
-    page: { ...WORK_DEFAULTS, ...resolve(pageResult, {}) } as WorkPageSettings,
-    projects: resolve(projects, []) as Project[],
+    page:     { ...WORK_DEFAULTS, ...resolve(pageResult, {}) } as WorkPageSettings,
+    projects: resolve(projects, []),
   }
 })
 
-/** About page — page settings from Supabase */
 export const fetchAboutPageData = cache(async (): Promise<AboutPageBundle> => {
   const [pageResult] = await Promise.allSettled([fetchSetting('page.about')])
   return { page: { ...ABOUT_DEFAULTS, ...resolve(pageResult, {}) } as AboutPageSettings }
 })
 
-/** Contact page — page settings from Supabase */
 export const fetchContactPageData = cache(async (): Promise<ContactPageBundle> => {
   const [pageResult] = await Promise.allSettled([fetchSetting('page.contact')])
   return { page: { ...CONTACT_DEFAULTS, ...resolve(pageResult, {}) } as ContactPageSettings }
 })
 
-/** Scoops page — items from Sanity; page settings from Supabase */
 export const fetchScoopsPageData = cache(async (): Promise<ScoopsPageBundle> => {
   const [pageResult, scoops] = await Promise.allSettled([
     fetchSetting('page.scoops'),
-    fetchSanityScoops(),
+    fetchScoops(),
   ])
 
   return {
-    page: { ...SCOOPS_PAGE_DEFAULTS, ...resolve(pageResult, {}) } as ScoopsPageSettings,
-    scoopsItems: resolve(scoops, []) as ScoopItem[],
+    page:        { ...SCOOPS_PAGE_DEFAULTS, ...resolve(pageResult, {}) } as ScoopsPageSettings,
+    scoopsItems: resolve(scoops, []),
   }
+})
+
+// ── Project detail (for /work/[slug]) ────────────────────────
+
+export const fetchProjectBySlug = cache(async (slug: string): Promise<Project | null> => {
+  const { data } = await supabase
+    .from('ruff_projects')
+    .select('*')
+    .eq('slug', slug)
+    .eq('published', true)
+    .single()
+  if (!data) return null
+  return { ...data, href: `/work/${data.slug}` } as Project
+})
+
+// ── Scoop detail (for /scoops/[slug]) ────────────────────────
+
+export const fetchScoopBySlug = cache(async (slug: string): Promise<ScoopItem | null> => {
+  const { data } = await supabase
+    .from('ruff_scoops')
+    .select('*')
+    .eq('slug', slug)
+    .eq('published', true)
+    .single()
+  return data ? (data as ScoopItem) : null
 })

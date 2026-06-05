@@ -12,6 +12,8 @@ export interface Project {
   categories: string[]
   is_featured: boolean
   sort_order: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content?: any[]
 }
 
 export interface Testimonial {

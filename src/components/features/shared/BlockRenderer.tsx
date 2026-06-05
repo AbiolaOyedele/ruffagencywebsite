@@ -60,12 +60,18 @@ function resolveBlockImage(imageUrl?: string, image?: SanityImageRef): string {
 
 // ── Individual block renderers ────────────────────────────────
 
-function TextBlock({ content }: { content: PortableTextBlock[] }) {
+function TextBlock({ content, html }: { content?: PortableTextBlock[]; html?: string }) {
   return (
     <div className="page-container lg:px-page">
-      <div className="max-w-3xl space-y-6">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <PortableText value={content as any} components={ptComponents} />
+      <div className="max-w-3xl space-y-6 rte-rendered">
+        {/* Admin-built content uses HTML; Sanity content uses Portable Text */}
+        {html
+          ? <div dangerouslySetInnerHTML={{ __html: html }} className="prose-ruff" />
+          : content && (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <PortableText value={content as any} components={ptComponents} />
+          )
+        }
       </div>
     </div>
   )
@@ -97,10 +103,11 @@ function ImageBlock({
 }
 
 function ImageTextBlock({
-  image, imageUrl, text, layout,
+  image, imageUrl, html, text, layout,
 }: {
   image?: SanityImageRef
   imageUrl?: string
+  html?: string
   text?: PortableTextBlock[]
   layout?: 'image-left' | 'image-right'
 }) {
@@ -115,10 +122,15 @@ function ImageTextBlock({
             <Image src={src} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
           </div>
         )}
-        {text && (
+        {(html ?? text) && (
           <div className="space-y-6">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <PortableText value={text as any} components={ptComponents} />
+            {html
+              ? <div dangerouslySetInnerHTML={{ __html: html }} className="prose-ruff" />
+              : text && (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                <PortableText value={text as any} components={ptComponents} />
+              )
+            }
           </div>
         )}
       </div>
@@ -127,21 +139,33 @@ function ImageTextBlock({
 }
 
 function TwoColumnText({
-  leftColumn, rightColumn,
+  leftColumn, rightColumn, leftHtml, rightHtml,
 }: {
   leftColumn?: PortableTextBlock[]
   rightColumn?: PortableTextBlock[]
+  leftHtml?: string
+  rightHtml?: string
 }) {
   return (
     <div className="page-container lg:px-page">
       <div className="grid md:grid-cols-2 gap-gutter">
         <div className="space-y-6">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {leftColumn && <PortableText value={leftColumn as any} components={ptComponents} />}
+          {leftHtml
+            ? <div dangerouslySetInnerHTML={{ __html: leftHtml }} className="prose-ruff" />
+            : leftColumn && (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              <PortableText value={leftColumn as any} components={ptComponents} />
+            )
+          }
         </div>
         <div className="space-y-6">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {rightColumn && <PortableText value={rightColumn as any} components={ptComponents} />}
+          {rightHtml
+            ? <div dangerouslySetInnerHTML={{ __html: rightHtml }} className="prose-ruff" />
+            : rightColumn && (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              <PortableText value={rightColumn as any} components={ptComponents} />
+            )
+          }
         </div>
       </div>
     </div>
@@ -190,7 +214,8 @@ function ImageGallery({
     <div className="page-container lg:px-page">
       <div className={`grid ${colClass} gap-gutter`}>
         {images.map((img, i) => {
-          const src = resolveBlockImage(undefined, img)
+          // img can be a string URL (admin) or a SanityImageRef object
+          const src = typeof img === 'string' ? img : resolveBlockImage(undefined, img as SanityImageRef)
           if (!src) return null
           return (
             <div key={i} className="relative aspect-square overflow-hidden ~rounded-[.625rem]/[1.25rem]">
@@ -213,7 +238,14 @@ export function BlockRenderer({ blocks }: BlockRendererProps) {
       {blocks.map((block) => {
         switch (block._type) {
           case 'textBlock':
-            return <TextBlock key={block._key} content={block.content} />
+            return (
+              <TextBlock
+                key={block._key}
+                content={block.content}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                html={(block as any).html}
+              />
+            )
 
           case 'imageBlock':
             return (
@@ -232,6 +264,8 @@ export function BlockRenderer({ blocks }: BlockRendererProps) {
                 key={block._key}
                 image={block.image}
                 imageUrl={block.imageUrl}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                html={(block as any).html}
                 text={block.text}
                 layout={block.layout}
               />
@@ -243,6 +277,10 @@ export function BlockRenderer({ blocks }: BlockRendererProps) {
                 key={block._key}
                 leftColumn={block.leftColumn}
                 rightColumn={block.rightColumn}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                leftHtml={(block as any).leftHtml}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                rightHtml={(block as any).rightHtml}
               />
             )
 
@@ -250,7 +288,14 @@ export function BlockRenderer({ blocks }: BlockRendererProps) {
             return <VideoBlock key={block._key} url={block.url} caption={block.caption} />
 
           case 'imageGallery':
-            return <ImageGallery key={block._key} images={block.images} columns={block.columns} />
+            return (
+              <ImageGallery
+                key={block._key}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                images={block.images as any}
+                columns={block.columns}
+              />
+            )
 
           default:
             return null

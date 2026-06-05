@@ -13,6 +13,7 @@ create table if not exists ruff_settings (
 create table if not exists ruff_projects (
   id          uuid primary key default gen_random_uuid(),
   slug        text not null unique,
+  content     jsonb not null default '[]'::jsonb,
   title       text not null,
   client      text not null default '',
   description text,
@@ -57,6 +58,7 @@ create table if not exists ruff_scoops (
   category    text,
   description text,
   href        text,
+  content     jsonb not null default '[]'::jsonb,
   sort_order  integer not null default 0,
   published   boolean not null default true,
   created_at  timestamptz not null default now(),

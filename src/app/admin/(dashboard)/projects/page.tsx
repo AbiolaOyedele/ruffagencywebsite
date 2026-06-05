@@ -73,7 +73,7 @@ export default function ProjectsPage() {
         title="Projects"
         description="All work projects shown on the Work page and Home page."
         actions={
-          <Link href="/projects/new">
+          <Link href="/admin/projects/new">
             <Button variant="primary" size="sm">+ New project</Button>
           </Link>
         }
@@ -87,7 +87,7 @@ export default function ProjectsPage() {
         ) : projects.length === 0 ? (
           <Card className="py-16 text-center">
             <p className="text-[#9ca3af]">No projects yet.</p>
-            <Link href="/projects/new" className="mt-4 inline-block">
+            <Link href="/admin/projects/new" className="mt-4 inline-block">
               <Button variant="primary" size="sm">Add first project</Button>
             </Link>
           </Card>
@@ -150,7 +150,7 @@ export default function ProjectsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <Link href={`/projects/${project.id}`}>
+                    <Link href={`/admin/projects/${project.id}`}>
                       <Button variant="secondary" size="sm">Edit</Button>
                     </Link>
                     <Button

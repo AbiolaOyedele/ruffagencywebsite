@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { fetchSanityProjectBySlug } from '@/sanity/lib/queries'
-import { fetchGlobalData } from '@/services/cms'
+import { fetchProjectBySlug, fetchGlobalData } from '@/services/cms'
 import { BlockRenderer } from '@/components/features/shared/BlockRenderer'
 import { Footer } from '@/components/ui/Footer'
 
@@ -15,7 +14,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const project = await fetchSanityProjectBySlug(slug)
+  const project = await fetchProjectBySlug(slug)
   if (!project) return { title: 'Project Not Found' }
   return {
     title: `${project.title} — ${project.client}`,
@@ -26,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function WorkDetailPage({ params }: Props) {
   const { slug } = await params
   const [project, global] = await Promise.all([
-    fetchSanityProjectBySlug(slug),
+    fetchProjectBySlug(slug),
     fetchGlobalData(),
   ])
 
@@ -104,9 +103,10 @@ export default async function WorkDetailPage({ params }: Props) {
           </div>
 
           {/* ── Content blocks ───────────────────────────────── */}
-          {project.content?.length > 0 && (
+          {(project.content?.length ?? 0) > 0 && (
             <div className="bg-base-bg ~py-16/28">
-              <BlockRenderer blocks={project.content} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <BlockRenderer blocks={project.content as any} />
             </div>
           )}
 

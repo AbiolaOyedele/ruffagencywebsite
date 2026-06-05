@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { fetchSanityScoopBySlug } from '@/sanity/lib/queries'
-import { fetchGlobalData } from '@/services/cms'
+import { fetchScoopBySlug, fetchGlobalData } from '@/services/cms'
 import { BlockRenderer } from '@/components/features/shared/BlockRenderer'
 import { Footer } from '@/components/ui/Footer'
 
@@ -14,7 +13,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const scoop = await fetchSanityScoopBySlug(slug)
+  const scoop = await fetchScoopBySlug(slug)
   if (!scoop) return { title: 'Not Found' }
   return {
     title: scoop.title,
@@ -25,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ScoopDetailPage({ params }: Props) {
   const { slug } = await params
   const [scoop, global] = await Promise.all([
-    fetchSanityScoopBySlug(slug),
+    fetchScoopBySlug(slug),
     fetchGlobalData(),
   ])
 
@@ -92,9 +91,10 @@ export default async function ScoopDetailPage({ params }: Props) {
           </div>
 
           {/* ── Content blocks ───────────────────────────────── */}
-          {scoop.content?.length > 0 && (
+          {(scoop.content?.length ?? 0) > 0 && (
             <div className="bg-base-bg ~py-8/16 border-t border-base-fg/10">
-              <BlockRenderer blocks={scoop.content} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <BlockRenderer blocks={scoop.content as any} />
             </div>
           )}
 

@@ -34,6 +34,16 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'cdn.sanity.io',
       },
+      // Placeholder images (used in dev/testing)
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      // Generic CDN/external images stored in CMS
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
   },
 }
